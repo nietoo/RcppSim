@@ -41,3 +41,4 @@ options(unzip = "internal")
 devtools::install_github("YegorGalkin/RcppSim",quick=TRUE,local=FALSE)
 
 Thats it, simulator is good to go!
+# 2d_simulator

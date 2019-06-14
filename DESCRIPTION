@@ -17,5 +17,6 @@ LinkingTo:
   devtools
 RcppModules:
   poisson_1d_module
+  poisson_2d_module
 SystemRequirements: C++11
 Suggests: testthat
