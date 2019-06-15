@@ -264,9 +264,9 @@ struct Grid_2d
           double distance_x = abs(cell_at(i, j).coords_x[k] - death_cell.coords_x[in_cell_death_index]);
           double distance_y = abs(cell_at(i, j).coords_y[k] - death_cell.coords_y[in_cell_death_index]);
           
-          double distance = distance_x*distance_x + distance_y*distance_y;
+          double distance = sqrt(distance_x*distance_x + distance_y*distance_y);
   
-          if (distance > death_cutoff_r*death_cutoff_r)
+          if (distance > death_cutoff_r)
             continue; //Too far to interact
   
           double interaction = dd * death_kernel_spline(distance); //?
@@ -358,9 +358,9 @@ struct Grid_2d
             double distance_x = abs(cell_at(i, j).coords_x[k] - x_coord_new);
             double distance_y = abs(cell_at(i, j).coords_y[k] - y_coord_new);
             
-            double distance = distance_x*distance_x + distance_y*distance_y;
+            double distance = sqrt(distance_x*distance_x + distance_y*distance_y);
   
-            if (distance > death_cutoff_r*death_cutoff_r)
+            if (distance > death_cutoff_r)
               continue; //Too far to interact
   
             double interaction = dd * death_kernel_spline(distance); //?
