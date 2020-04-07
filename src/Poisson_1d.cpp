@@ -114,6 +114,10 @@ struct Grid_1d
   vector<double> get_all_coords()
   {
     vector<double> result;
+    if (total_population == 0)
+    {
+      return result;
+    }
     for (auto cell : cells)
     {
       if (cell.coords_x.size() != 0)
@@ -360,6 +364,45 @@ struct Grid_1d
       }
     }
   }
+  
+  void run_until_stable(int step, int epsilon)
+  {
+    FILE * log_file;
+    log_file = fopen("epsilon_stats.log","w");
+    std::vector<int> old_cell_population(cell_population.size());
+    double euclidean_norm = 0;
+    double min_norm = 300000;
+    make_event();
+    long long int event_count = 0;
+    while(1)
+    {
+      std::copy(cell_population.begin(),
+                cell_population.end(),
+                old_cell_population.begin());
+      for(int i = 0; i < step; ++i) {
+        make_event();
+        event_count++;
+      }
+      euclidean_norm = 0;
+      for (int cur_cell = 0; cur_cell < cell_population.size(); ++cur_cell)
+      {
+        euclidean_norm += pow((cell_population[cur_cell] - old_cell_population[cur_cell]), 2);
+      }
+      euclidean_norm /= step;
+      if (euclidean_norm < min_norm) {
+        min_norm = euclidean_norm;
+        fprintf(log_file, "%lld %lf %lf\n", event_count, time, min_norm);
+        fclose (log_file);
+        log_file = fopen("epsilon_stats.log","w");
+        printf("%lld %lf %lf\n", event_count, time, min_norm);
+      }
+      if (euclidean_norm < epsilon)
+      {
+        fclose (log_file);
+        return;
+      }
+    }
+  }
 
   double get_birth_spline_value(double at)
   {
@@ -521,6 +564,7 @@ RCPP_MODULE(poisson_1d_module)
       .method("make_event", &Grid_1d::make_event)
       .method("run_events", &Grid_1d::run_events)
       .method("run_for", &Grid_1d::run_for)
+      .method("run_until_stable", &Grid_1d::run_until_stable)
 
       .field_readonly("total_population", &Grid_1d::total_population)
       .field_readonly("total_death_rate", &Grid_1d::total_death_rate)
