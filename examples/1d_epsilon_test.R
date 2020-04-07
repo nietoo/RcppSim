@@ -2,7 +2,7 @@ library(pacman)
 p_load(tidyverse,spatstat,future,promises,listenv)
 library(MathBioSim)
 
-result_dir = './11_28_2019/'
+result_dir = './30_03_2020/'
 dir.create(result_dir, showWarnings = FALSE)
 dir.create(paste0(result_dir,"pop/"), showWarnings = FALSE)
 dir.create(paste0(result_dir,"pcfs/"), showWarnings = FALSE)
@@ -12,6 +12,7 @@ plan(multiprocess)
 n_samples = 2000
 initial_population = 10000
 time_limit = 36000
+epsilon = 10^(-6)
 
 params_all <-
   data.frame(id=c(1,2,3),
@@ -74,7 +75,6 @@ for (i in 1:nrow(params_all)) {
       calculated_limit = n_samples
       
       for(j in 1:n_samples){
-        print(sim$total_population)
         sim$run_events(sim$total_population)
         pop[j]=sim$total_population
         time[j]=sim$time
@@ -88,6 +88,26 @@ for (i in 1:nrow(params_all)) {
         pcf_estimate[[j]]=data.frame(Kest=K_estimate$iso/2,x=pcf_grid)%>%
           mutate(pfc=(Kest-lag(Kest))/(pcf_grid-lag(pcf_grid))/sim$area_length_x)%>%
           pull(pfc)
+        
+        l2_norm = 0.0
+        
+        if (j > 1){
+          for(k in 1:length(pcf_estimate[[1]])){
+            if (!(is.na(pcf_estimate[[j]][k])) && !(is.na(pcf_estimate[[j-1]][k]))) {
+              l2_norm = l2_norm + (pcf_estimate[[j]][k] - pcf_estimate[[j-1]][k])^2
+              if (!((pcf_estimate[[j]][k] - pcf_estimate[[j-1]][k])^2) == 0) {
+                cat('cell #', k, ', sim #', j, ', delta is ', (pcf_estimate[[j]][k] - pcf_estimate[[j-1]][k])^2, '\n')
+              }
+            }
+          }
+        }
+        
+        cat('simulation #', j, '; current norm is ', l2_norm, '\n')
+        
+        if ((j > 1) && (l2_norm < epsilon)) {
+          calculated_limit = j
+          break
+        }
         
         if (Sys.time()-start_time>time_limit){
           calculated_limit = j
@@ -103,6 +123,9 @@ for (i in 1:nrow(params_all)) {
         }
         pcf_est_av[j]=mean(jrow)
       }
+      
+      ggplot(data=data.frame(x=pcf_grid,y=pcf_est_av),aes(x=x,y=y))+
+        geom_point()
       
       pcfs<-data.frame(id=i,r=pcf_grid,y=pcf_est_av)
       pops<-data.frame(id=i,time=time,pop=pop)
