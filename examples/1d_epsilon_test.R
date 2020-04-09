@@ -7,18 +7,20 @@ dir.create(result_dir, showWarnings = FALSE)
 dir.create(paste0(result_dir,"pop/"), showWarnings = FALSE)
 dir.create(paste0(result_dir,"pcfs/"), showWarnings = FALSE)
 
-plan(multiprocess)
+plan(sequential)
 
 n_samples = 2000
 initial_population = 10000
 time_limit = 36000
-epsilon = 10^(-6)
+min_norm = Inf
+cell_count_x = 100
+epsilon = 1e-6
 
 params_all <-
   data.frame(id=c(1,2,3),
-             sm=c(0.07,0.96,0.07),
-             sw=c(0.09,0.09,0.96),
-             b=1,d=0.5,dd=3/(2*(log(2))),
+             sm=c(0.84,0.96,0.56),
+             sw=c(0.09,0.09,0.13),
+             b=1,d=0.1,dd=3/(2*(log(2))),
              samples=n_samples,
              start_pop=initial_population,
              seed=1234)%>%
@@ -47,7 +49,7 @@ for (i in 1:nrow(params_all)) {
       
       sim_params <-
         list("area_length_x"=params$area_length_x, 
-             "cell_count_x"=100,  
+             "cell_count_x"=cell_count_x,  
              
              "b"=params$b,    
              "d"=params$d,    
@@ -91,18 +93,19 @@ for (i in 1:nrow(params_all)) {
         
         l2_norm = 0.0
         
+        populations = sim$get_cell_populations()
         if (j > 1){
-          for(k in 1:length(pcf_estimate[[1]])){
-            if (!(is.na(pcf_estimate[[j]][k])) && !(is.na(pcf_estimate[[j-1]][k]))) {
-              l2_norm = l2_norm + (pcf_estimate[[j]][k] - pcf_estimate[[j-1]][k])^2
-              if (!((pcf_estimate[[j]][k] - pcf_estimate[[j-1]][k])^2) == 0) {
-                cat('cell #', k, ', sim #', j, ', delta is ', (pcf_estimate[[j]][k] - pcf_estimate[[j-1]][k])^2, '\n')
-              }
-            }
+          for(k in 1:cell_count_x){
+            #cat(j,' ', k, ' ', populations[k], ' ', populations_old[k], '\n')
+            l2_norm = l2_norm + (populations[k] - populations_old[k])^2
           }
         }
+        populations_old = populations
         
-        cat('simulation #', j, '; current norm is ', l2_norm, '\n')
+        if (j > 1 && l2_norm < min_norm) {
+          min_norm = l2_norm
+          cat('parameter id #', i, ', simulation #', j, '; current norm is ', l2_norm, '\n')
+        }
         
         if ((j > 1) && (l2_norm < epsilon)) {
           calculated_limit = j
@@ -124,8 +127,6 @@ for (i in 1:nrow(params_all)) {
         pcf_est_av[j]=mean(jrow)
       }
       
-      ggplot(data=data.frame(x=pcf_grid,y=pcf_est_av),aes(x=x,y=y))+
-        geom_point()
       
       pcfs<-data.frame(id=i,r=pcf_grid,y=pcf_est_av)
       pops<-data.frame(id=i,time=time,pop=pop)
