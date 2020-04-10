@@ -14,9 +14,9 @@ time_limit = 3
 
 params_all <-
   data.frame(id=c(1,2,3),
-             sm=c(0.07,0.96,0.07),
-             sw=c(0.09,0.09,0.96),
-             b=1,d=0.5,dd=3/(2*(log(2))),
+             sm=c(0.84,0.96,0.56),
+             sw=c(0.09,0.09,0.13),
+             b=1,d=0.1,dd=3/(2*(log(2))),
              samples=n_samples,
              start_pop=initial_population,
              seed=1234)%>%
