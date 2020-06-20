@@ -33,7 +33,7 @@ TODO: Like Linux
 2) Run simulation for specified time or number of events
     ```R
     sim$run_events(1e9)
-    sim$run_time(100)
+    sim$run_for(100)
     ```
 3) Extract and visualize results (using packages spatstat and tidyverse)
     ```R
