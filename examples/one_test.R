@@ -2,7 +2,7 @@ library(pacman)
 p_load(tidyverse, spatstat, future, promises)
 library(MathBioSim)
 
-result_dir = './test_june/'
+result_dir = './test/'
 dir.create(result_dir, showWarnings = FALSE)
 dir.create(paste0(result_dir,"pop/"), showWarnings = FALSE)
 dir.create(paste0(result_dir,"pcfs/"), showWarnings = FALSE)
